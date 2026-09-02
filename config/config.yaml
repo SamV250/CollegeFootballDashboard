@@ -1,0 +1,118 @@
+# =====================================================================
+# Global configuration for the CFB Prediction Dashboard.
+# Every value here can be changed without touching modeling or UI code.
+# =====================================================================
+
+project_name: "College Football Prediction Dashboard"
+
+# ---------------------------------------------------------------------
+# Season handling. The active season is detected automatically from the
+# system date (see src/config.py:active_season) unless `force_season`
+# is set to an integer here.
+# ---------------------------------------------------------------------
+season:
+  force_season: null            # e.g. 2026 to pin; null = auto-detect
+  season_start_month: 8         # August -> new football season begins
+  # Historical seasons pulled for training + backtesting. 2020 is skipped
+  # (COVID-shortened, non-representative schedules). Trim this list for a
+  # faster first refresh; extend it (CFBD has data back to ~2001) for more.
+  backtest_seasons: [2017, 2018, 2019, 2021, 2022, 2023, 2024, 2025]
+  current_season: 2026
+
+# ---------------------------------------------------------------------
+# Data layer. Source priority is tried top-to-bottom; the first source
+# that returns a valid, non-empty response wins. A failing source never
+# erases previously validated data (see src/data/store.py).
+# ---------------------------------------------------------------------
+data:
+  source_priority: ["cfbd", "espn", "local", "demo"]
+  storage_format: "parquet"     # parquet | sqlite
+  processed_dir: "data/processed"
+  raw_dir: "data/raw"
+  # Refresh cadence used by scripts/update_dashboard.py and the freshness
+  # badge in the UI. Values are minutes.
+  refresh_interval_minutes: 360        # every 6 hours in-season
+  refresh_interval_gameday_minutes: 15 # every 15 minutes on game days
+  stale_after_hours: 24
+  delayed_after_intervals: 1
+
+# ---------------------------------------------------------------------
+# Elo rating model.
+# ---------------------------------------------------------------------
+elo:
+  k_factor: 40
+  home_advantage: 55            # Elo points added to the home team pre-game
+  mov_multiplier: true          # scale K by margin of victory
+  preseason_regression: 0.33    # fraction pulled back to the mean each year
+  mean_rating: 1500
+  new_team_rating: 1350         # first-year / low-history FBS teams
+  fcs_opponent_rating: 1200     # non-FBS opponents
+
+# ---------------------------------------------------------------------
+# Primary game model.
+# ---------------------------------------------------------------------
+model:
+  backend: "lightgbm"           # lightgbm | xgboost
+  random_seed: 1729
+  calibration: "isotonic"       # isotonic | sigmoid | none
+  calibration_cv: 4
+  # Deliberately conservative: college-football outcomes are close to
+  # linear in a good opponent-adjusted rating gap, so a lightly
+  # regularised booster that mostly matches the linear baselines (while
+  # still capturing the occasional matchup interaction, and giving us
+  # SHAP explanations) is preferred over a deeper model that overfits.
+  n_estimators: 140
+  learning_rate: 0.03
+  max_depth: 3
+  min_child_samples: 80
+  subsample: 0.7
+  colsample_bytree: 0.7
+  # The reported win probability is an average of the calibrated boosted
+  # model, a logistic regression and the Elo probability. On real data no
+  # single method reliably beats the others; the blend is a touch better
+  # and better calibrated. Set gbm: 1.0 (others 0) to use the tree alone.
+  ensemble:
+    gbm: 0.34
+    logistic: 0.33
+    elo: 0.33
+  # Chronological split boundaries (inclusive) for final evaluation.
+  # Kept one season back from the live season so the "test" split is a
+  # full, already-completed season rather than the handful of games
+  # played so far this year. The live dashboard always simulates the
+  # active season regardless of these.
+  train_through_season: 2022
+  validation_season: 2023
+  test_season: 2024
+
+# ---------------------------------------------------------------------
+# Feature engineering.
+# ---------------------------------------------------------------------
+features:
+  rolling_window: 6             # games in the "recent form" window
+  recent_form_halflife: 3       # exponential weighting half-life (games)
+  min_games_for_stats: 4        # games needed before in-season stats fully
+                                # replace the preseason prior
+  preseason_regression: 0.35    # fraction of last year's rating pulled to mean
+  opponent_adjust_passes: 2     # iterative opponent adjustment passes
+
+# ---------------------------------------------------------------------
+# Monte Carlo season simulation.
+# ---------------------------------------------------------------------
+simulation:
+  n_iterations: 10000
+  random_seed: 20262027
+  home_field_win_prob_shift: 0.0   # already baked into the model
+  upset_noise: 0.0                  # extra per-game sd on win prob logit
+
+# ---------------------------------------------------------------------
+# Demo / offline mode. Used only when the active data source is "demo".
+# ---------------------------------------------------------------------
+demo:
+  # The synthetic current season is treated as complete through this week,
+  # so the dashboard shows a realistic mid-season snapshot out of the box.
+  as_of_week: 6
+  generated_label: "SYNTHETIC DEMO DATA - not real game results"
+
+version:
+  model_schema: 1
+  config_revision: "2026.09.01"

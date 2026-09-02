@@ -1,0 +1,101 @@
+# =====================================================================
+# FBS conference alignment for the 2026 season (demo default).
+# When a live data source is connected, alignment is taken from that
+# source and this file is used only as a fallback / offline default.
+#
+# `tier` drives the default committee prior and multi-bid expectations.
+# `champ_game`: does the league stage a championship game?
+# `divisions`: optional; if present, the title game pits division winners,
+#   otherwise it pits the top two by conference win percentage.
+# =====================================================================
+
+conferences:
+  SEC:
+    tier: power
+    champ_game: true
+    divisions: null
+    teams: [Alabama, Arkansas, Auburn, Florida, Georgia, Kentucky, LSU,
+            "Mississippi State", Missouri, Oklahoma, "Ole Miss",
+            "South Carolina", Tennessee, Texas, "Texas A&M", Vanderbilt]
+
+  "Big Ten":
+    tier: power
+    champ_game: true
+    divisions: null
+    teams: [Illinois, Indiana, Iowa, Maryland, Michigan, "Michigan State",
+            Minnesota, Nebraska, Northwestern, "Ohio State", Oregon,
+            "Penn State", Purdue, Rutgers, UCLA, USC, Washington, Wisconsin]
+
+  "Big 12":
+    tier: power
+    champ_game: true
+    divisions: null
+    teams: [Arizona, "Arizona State", Baylor, BYU, Cincinnati, Colorado,
+            Houston, "Iowa State", Kansas, "Kansas State", "Oklahoma State",
+            TCU, "Texas Tech", UCF, Utah, "West Virginia"]
+
+  ACC:
+    tier: power
+    champ_game: true
+    divisions: null
+    teams: ["Boston College", California, Clemson, Duke, "Florida State",
+            "Georgia Tech", Louisville, Miami, "NC State", "North Carolina",
+            Pittsburgh, SMU, Stanford, Syracuse, Virginia, "Virginia Tech",
+            "Wake Forest"]
+
+  "Pac-12":
+    tier: power
+    champ_game: true
+    divisions: null
+    teams: ["Boise State", "Colorado State", "Fresno State", "Oregon State",
+            "San Diego State", "Utah State", "Washington State", "Texas State"]
+
+  American:
+    tier: group_of_five
+    champ_game: true
+    divisions: null
+    teams: [Army, Charlotte, "East Carolina", "Florida Atlantic", Memphis,
+            Navy, "North Texas", Rice, "South Florida", Temple, Tulane,
+            Tulsa, UAB, UTSA]
+
+  "Mountain West":
+    tier: group_of_five
+    champ_game: true
+    divisions: null
+    teams: ["Air Force", "Hawai'i", Nevada, "New Mexico", "San Jose State",
+            UNLV, Wyoming, UTEP, "Northern Illinois"]
+
+  "Sun Belt":
+    tier: group_of_five
+    champ_game: true
+    divisions: null
+    teams: ["Appalachian State", "Arkansas State", "Coastal Carolina",
+            "Georgia Southern", "Georgia State", "James Madison", Louisiana,
+            Marshall, "Old Dominion", "South Alabama", "Southern Miss", Troy,
+            "UL Monroe"]
+
+  "MAC":
+    tier: group_of_five
+    champ_game: true
+    divisions: null
+    teams: [Akron, "Ball State", "Bowling Green", Buffalo, "Central Michigan",
+            "Eastern Michigan", "Kent State", "Miami (OH)", Ohio, Toledo,
+            "Western Michigan", UMass]
+
+  "Conference USA":
+    tier: group_of_five
+    champ_game: true
+    divisions: null
+    teams: [Delaware, "Jacksonville State", "Kennesaw State", Liberty,
+            "Louisiana Tech", "Middle Tennessee", "Missouri State",
+            "New Mexico State", "Sam Houston", "Western Kentucky"]
+
+  "FBS Independents":
+    tier: independent
+    champ_game: false
+    divisions: null
+    teams: ["Notre Dame", UConn]
+
+# Non-power conferences whose champion competes for the single
+# "highest ranked Group of Five" style access bid.
+group_of_five: [American, "Mountain West", "Sun Belt", "MAC", "Conference USA"]

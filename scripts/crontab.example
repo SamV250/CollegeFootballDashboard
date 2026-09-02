@@ -1,0 +1,15 @@
+# Example crontab for a Linux server running the dashboard.
+# Install with:  crontab scripts/crontab.example
+# Adjust PROJECT_DIR and the Python path to your environment.
+
+PROJECT_DIR=/opt/cfb-dashboard
+PYTHON=/opt/cfb-dashboard/.venv/bin/python
+
+# --- In-season: every 6 hours -------------------------------------------------
+0 */6 * * *  cd $PROJECT_DIR && $PYTHON scripts/update_dashboard.py --iterations 10000 >> logs/refresh.log 2>&1
+
+# --- Game days (Thu-Sun): every 15 minutes, 11:00-06:00 UTC -----------------
+*/15 11-23,0-6 * * 4,5,6,0  cd $PROJECT_DIR && $PYTHON scripts/update_dashboard.py --skip-train --iterations 6000 >> logs/refresh.log 2>&1
+
+# --- Nightly full retrain + deep simulation ---------------------------------
+30 8 * * *  cd $PROJECT_DIR && $PYTHON scripts/update_dashboard.py --iterations 20000 >> logs/refresh.log 2>&1

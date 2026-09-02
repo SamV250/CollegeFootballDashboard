@@ -1,0 +1,56 @@
+[project]
+name = "cfb-prediction-dashboard"
+version = "1.0.0"
+description = "Machine-learning dashboard for the 2026-27 NCAA Division I FBS college football season: game predictions, playoff odds, and plain-language explanations."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+dependencies = [
+    "streamlit>=1.40",
+    "pandas>=2.1",
+    "numpy>=1.26",
+    "plotly>=5.20",
+    "scikit-learn>=1.4",
+    "lightgbm>=4.3",
+    "xgboost>=2.0",
+    "shap>=0.45",
+    "pyarrow>=15.0",
+    "pyyaml>=6.0",
+    "python-dotenv>=1.0",
+    "requests>=2.31",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0", "ruff>=0.6"]
+
+[tool.setuptools]
+packages = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::UserWarning",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+extend-exclude = ["data", "models"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+ignore = [
+    "E501",    # long lines are tolerated in narrative strings / config
+    "B008",    # Streamlit / dataclass default-call patterns
+    "B905",    # zip(strict=) not required here (frames are aligned by construction)
+    "B904",    # raise-from not always meaningful in adapter fallbacks
+    "UP037",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["F841", "B011"]
+"pages/*" = ["E402"]      # st.set_page_config must precede some imports
+"app.py" = ["E402"]
+"scripts/*" = ["E402", "F401"]  # _bootstrap import has side effects

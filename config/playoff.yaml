@@ -1,0 +1,39 @@
+# =====================================================================
+# Playoff format + committee-style selection model.
+# Change these values to model a different bracket or selection philosophy
+# without editing any Python.
+# =====================================================================
+
+format:
+  n_teams: 12                    # size of the playoff field
+  n_first_round_byes: 4          # top seeds that skip round 1
+  highest_ranked_conf_champs: 5  # this many conference champions are
+                                 # guaranteed a spot (seeded into the field)
+  byes_go_to_conf_champs: true   # top 4 seeds reserved for conf champions
+  neutral_site_rounds: ["quarterfinal", "semifinal", "final"]
+  home_site_rounds: ["first_round"]
+
+# ---------------------------------------------------------------------
+# Transparent selection score. The committee's real process cannot be
+# reproduced exactly; this is an explicit, tunable proxy. Higher score =
+# more likely to be selected / seeded higher. All probabilities derived
+# from it are labelled ESTIMATES in the UI.
+# ---------------------------------------------------------------------
+selection_score:
+  weights:
+    win_pct: 5.0                 # overall winning percentage
+    adjusted_efficiency: 4.0     # opponent-adjusted net efficiency (z-score)
+    strength_of_schedule: 2.5    # average opponent rating (z-score)
+    quality_wins: 1.6            # wins vs top-25 selection-score teams
+    bad_losses: -2.2            # losses vs outside-top-60 teams
+    conference_champion: 3.0     # bonus for winning your conference
+    conference_strength: 1.0     # multi-bid league adjustment (z-score)
+    head_to_head: 0.8            # tiebreak nudge among near-equal teams
+    committee_prior: 2.0         # weight on the pre-set committee-style
+                                 # ranking (preseason + model blend)
+  quality_win_rank_cutoff: 25
+  bad_loss_rank_cutoff: 60
+  # Power conferences get automatic bids for their champion regardless of
+  # ranking, per `highest_ranked_conf_champs` above.
+  autobid_conferences: ["SEC", "Big Ten", "Big 12", "ACC", "Pac-12"]
+  group_of_five_label: "Group of Five"
