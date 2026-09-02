@@ -1,0 +1,7 @@
+# Binary artifacts that the deploy workflow bakes into the Hugging Face Space.
+# These files are gitignored in this (GitHub) repo, so these rules are inert
+# here; they exist so the Space stores them via Git LFS, which its server-side
+# lfs-check hook requires.
+*.parquet   filter=lfs diff=lfs merge=lfs -text
+*.joblib    filter=lfs diff=lfs merge=lfs -text
+*.pkl       filter=lfs diff=lfs merge=lfs -text

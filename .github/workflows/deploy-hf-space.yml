@@ -88,40 +88,13 @@ jobs:
           [ "$ok" = 1 ] || { echo "::error::pipeline did not produce required artifacts - see 'Show refresh report' above"; exit 1; }
           echo "artifacts OK"
 
-      - name: Assemble the Space tree
-        run: |
-          # HF Spaces reads its config from README front-matter.
-          cp deploy/SPACE_README.md README.md
-          # A Space-specific ignore list: keep the artifacts the app reads,
-          # drop the rebuildable intermediates and dev cruft.
-          cat > .gitignore <<'EOF'
-          __pycache__/
-          *.py[cod]
-          .venv/
-          .env
-          .ruff_cache/
-          .pytest_cache/
-          logs/
-          data/raw/*
-          !data/raw/.gitkeep
-          data/processed/features.parquet
-          data/processed/last_update_report.json
-          EOF
-
-      - name: Push to Hugging Face Space
+      - name: Deploy to Hugging Face Space
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          DEPLOY_MSG: "deploy ${{ github.sha }}"
         run: |
           if [ -z "$HF_TOKEN" ]; then
             echo "::error::HF_TOKEN secret is not set - cannot deploy."; exit 1
           fi
-          SRC=$(git rev-parse --short HEAD)
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git config user.name  "cfb-deploy-bot"
-          git add -A
-          git commit -q -m "deploy $(date -u +%Y-%m-%dT%H:%MZ) from ${SRC}" \
-            || { echo "nothing to deploy"; exit 0; }
-          git push --force \
-            "https://${HF_USERNAME}:${HF_TOKEN}@huggingface.co/spaces/${HF_USERNAME}/${HF_SPACE}" \
-            HEAD:main
-          echo "Deployed to https://huggingface.co/spaces/${HF_USERNAME}/${HF_SPACE}"
+          pip install --quiet "huggingface_hub>=0.24"
+          python scripts/deploy_to_space.py
