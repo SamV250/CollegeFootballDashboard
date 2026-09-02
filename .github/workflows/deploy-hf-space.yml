@@ -33,7 +33,9 @@ on:
 
 concurrency:
   group: hf-deploy
-  cancel-in-progress: false
+  # Newest deploy wins; supersede any queued/running one so a slow or stuck
+  # run can't hold up the line.
+  cancel-in-progress: true
 
 jobs:
   deploy:
