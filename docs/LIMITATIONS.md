@@ -39,10 +39,18 @@
 15. **Single-node, file-based.** No database, no multi-user state, no horizontal
     scaling. Fine for a briefing tool; not a public high-traffic service as-is.
 
+## Done since first draft
+
+- ~~Connect live CFBD data end-to-end~~ — done (2017–2026, FBS-vs-FBS, advanced
+  stats where available); ensemble win model; real backtest on the Evaluation page.
+- ~~Dockerfile + hosting path~~ — done (`Dockerfile`, `.github/workflows/deploy-hf-space.yml`,
+  `docs/DEPLOY.md`; Hugging Face Docker Space, Option A).
+
 ## Recommended next improvements (roughly in priority order)
 
-1. **Connect live CFBD data end-to-end** and run a real 6–10 season backtest;
-   publish those numbers on the Model Evaluation page.
+1. **Incremental CFBD fetch** — each refresh currently re-pulls every configured
+   season (~3 min, ~140 advanced-stat calls). After the initial backfill, only
+   fetch the current season's unplayed/just-played weeks.
 2. **Injury / availability ingestion** (CFBD or a licensed feed) with automatic
    rating deltas, replacing the manual slider for known absences.
 3. **Returning production & transfer-portal priors** for a much better Week 0–4

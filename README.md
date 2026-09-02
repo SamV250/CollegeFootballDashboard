@@ -98,6 +98,25 @@ data is never labelled "live".
 
 ---
 
+## Deploy (Hugging Face Spaces)
+
+A `Dockerfile` (host-agnostic, listens on `$PORT`) and a deploy workflow
+(`.github/workflows/deploy-hf-space.yml`) are included. The pattern: a scheduled
+Action refreshes data + model + simulation and force-pushes the tree (code +
+baked-in artifacts) to a Hugging Face **Docker** Space, which rebuilds and
+serves. The Space holds no API key.
+
+Set two GitHub secrets (`HF_TOKEN`, `CFBD_API_KEY`), point the workflow's
+`HF_USERNAME` / `HF_SPACE` at your Space, and run it. Full walkthrough — plus
+notes for Streamlit Community Cloud, Railway/Render/Fly, and plain Docker — in
+**[docs/DEPLOY.md](docs/DEPLOY.md)**.
+
+```bash
+docker build -t cfb-dashboard . && docker run -p 7860:7860 cfb-dashboard
+```
+
+---
+
 ## Project layout
 
 ```

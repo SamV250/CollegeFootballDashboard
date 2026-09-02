@@ -1,0 +1,110 @@
+name: Deploy to Hugging Face Space
+
+# Option A hosting: refresh the data + model + simulation, then push the
+# whole tree (code + baked-in artifacts) to a Hugging Face Space, which
+# rebuilds its Docker image and serves the dashboard.
+#
+# Required GitHub secrets:
+#   HF_TOKEN      - a Hugging Face access token with *write* scope
+#   CFBD_API_KEY  - CollegeFootballData key (optional; without it the deploy
+#                   falls back to the synthetic demo dataset)
+#
+# Edit the HF_USERNAME / HF_SPACE env values below to match your Space.
+
+on:
+  schedule:
+    - cron: "0 */6 * * *"          # keep data current, every 6 h (UTC)
+    # Game-day cadence (Fri-Sun) -- uncomment for 15-minute refreshes:
+    # - cron: "*/15 * * * 5,6,0"
+  push:
+    branches: [main]
+    paths:                          # code changes redeploy; docs don't
+      - "app.py"
+      - "pages/**"
+      - "src/**"
+      - "config/**"
+      - "requirements.txt"
+      - "Dockerfile"
+      - ".dockerignore"
+      - ".streamlit/**"
+      - "deploy/SPACE_README.md"
+      - ".github/workflows/deploy-hf-space.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: hf-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      HF_USERNAME: SamV250
+      HF_SPACE: CollegeFootballDashboard
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install OpenMP + dependencies
+        run: |
+          sudo apt-get update && sudo apt-get install -y libgomp1
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Refresh data -> retrain -> simulate
+        env:
+          CFBD_API_KEY: ${{ secrets.CFBD_API_KEY }}
+        run: python scripts/update_dashboard.py --iterations 10000
+
+      - name: Sanity-check artifacts exist
+        run: |
+          test -f models/game_model.joblib
+          test -f models/model_card.json
+          test -f data/processed/games.parquet
+          test -f data/processed/dashboard/summary.json
+          echo "artifacts OK"
+
+      - name: Assemble the Space tree
+        run: |
+          # HF Spaces reads its config from README front-matter.
+          cp deploy/SPACE_README.md README.md
+          # A Space-specific ignore list: keep the artifacts the app reads,
+          # drop the rebuildable intermediates and dev cruft.
+          cat > .gitignore <<'EOF'
+          __pycache__/
+          *.py[cod]
+          .venv/
+          .env
+          .ruff_cache/
+          .pytest_cache/
+          logs/
+          data/raw/*
+          !data/raw/.gitkeep
+          data/processed/features.parquet
+          data/processed/last_update_report.json
+          EOF
+
+      - name: Push to Hugging Face Space
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          if [ -z "$HF_TOKEN" ]; then
+            echo "::error::HF_TOKEN secret is not set - cannot deploy."; exit 1
+          fi
+          SRC=$(git rev-parse --short HEAD)
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name  "cfb-deploy-bot"
+          git add -A
+          git commit -q -m "deploy $(date -u +%Y-%m-%dT%H:%MZ) from ${SRC}" \
+            || { echo "nothing to deploy"; exit 0; }
+          git push --force \
+            "https://${HF_USERNAME}:${HF_TOKEN}@huggingface.co/spaces/${HF_USERNAME}/${HF_SPACE}" \
+            HEAD:main
+          echo "Deployed to https://huggingface.co/spaces/${HF_USERNAME}/${HF_SPACE}"
