@@ -40,8 +40,11 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
-      HF_USERNAME: SamV250
-      HF_SPACE: CollegeFootballDashboard
+      # Hugging Face username + Space name. Override without editing this file
+      # by setting repo Variables (Settings -> Secrets and variables -> Actions
+      # -> Variables) named HF_USERNAME / HF_SPACE.
+      HF_USERNAME: ${{ vars.HF_USERNAME || 'sammmmmmm25' }}
+      HF_SPACE: ${{ vars.HF_SPACE || 'CollegeFootballDashboard' }}
     steps:
       - uses: actions/checkout@v4
         with:

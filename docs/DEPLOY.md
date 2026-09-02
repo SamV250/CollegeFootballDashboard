@@ -43,13 +43,12 @@ CollegeFootballData ──▶ GitHub Action (every 6 h)
 
 ### 4. Point the workflow at your Space
 
-Edit `.github/workflows/deploy-hf-space.yml` → `env:` block:
-
-```yaml
-env:
-  HF_USERNAME: SamV250                 # your HF username
-  HF_SPACE: CollegeFootballDashboard   # your Space name
-```
+The workflow defaults to `HF_USERNAME=sammmmmmm25`, `HF_SPACE=CollegeFootballDashboard`.
+To change either **without editing the file**, add repo **Variables** (Settings →
+Secrets and variables → Actions → *Variables* tab): `HF_USERNAME`, `HF_SPACE`.
+The `HF_USERNAME` is your **Hugging Face** username (from your HF profile URL),
+which may differ from your GitHub username — a mismatch is the usual cause of a
+`git push` "repository not found" (exit 128).
 
 Also update the two GitHub URLs in `deploy/SPACE_README.md` if your repo path
 differs.
