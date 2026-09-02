@@ -7,7 +7,7 @@ sdk: docker
 app_port: 7860
 pinned: false
 license: mit
-short_description: ML game predictions, playoff odds and plain-English explanations for the 2026 CFB season
+short_description: ML predictions and playoff odds for the 2026 FBS season
 ---
 
 # College Football Prediction Dashboard
