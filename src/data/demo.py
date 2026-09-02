@@ -51,13 +51,12 @@ ADVANCED_METRICS: dict[str, bool] = {
     "pace_sec_per_play": True,     # seconds/play -- treated as neutral info
 }
 
-_SEASON_START = {  # Thursday of Week 1 for each season (approx, UTC)
-    2022: datetime(2022, 9, 1, tzinfo=timezone.utc),
-    2023: datetime(2023, 8, 31, tzinfo=timezone.utc),
-    2024: datetime(2024, 8, 29, tzinfo=timezone.utc),
-    2025: datetime(2025, 8, 28, tzinfo=timezone.utc),
-    2026: datetime(2026, 8, 27, tzinfo=timezone.utc),
-}
+def _season_start(year: int) -> datetime:
+    """Approx. Thursday before Labor Day (Week 1 kickoff) for any season."""
+
+    d = datetime(year, 9, 1, tzinfo=timezone.utc)
+    # step back to the nearest Thursday (weekday 3) on/just before Sep 1
+    return d - timedelta(days=(d.weekday() - 3) % 7)
 
 
 def _rng(seed: int) -> np.random.Generator:
@@ -205,7 +204,7 @@ def _season_schedule(
             nc_degree[b] += 1
 
     # --- dates + neutral flag ------------------------------------------------
-    start = _SEASON_START[season]
+    start = _season_start(season)
     for g in games:
         wk = g["week"]
         dow = int(rng.choice([1, 2, 2, 2, 3], p=[.08, .12, .55, .12, .13]))

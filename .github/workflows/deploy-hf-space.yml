@@ -64,14 +64,28 @@ jobs:
       - name: Refresh data -> retrain -> simulate
         env:
           CFBD_API_KEY: ${{ secrets.CFBD_API_KEY }}
-        run: python scripts/update_dashboard.py --iterations 10000
+        run: |
+          if [ -z "$CFBD_API_KEY" ]; then
+            echo "::warning::CFBD_API_KEY not set - deploying with the synthetic demo dataset."
+          fi
+          python scripts/update_dashboard.py --iterations 10000
+
+      - name: Show refresh report
+        if: always()
+        run: |
+          echo "----- last_update_report.json -----"
+          cat data/processed/last_update_report.json 2>/dev/null || echo "(none)"
+          echo "----- recent refresh log -----"
+          python -c "import json,sys; L=json.load(open('data/processed/refresh_log.json')); [print(e) for e in L[-8:]]" 2>/dev/null || echo "(none)"
 
       - name: Sanity-check artifacts exist
         run: |
-          test -f models/game_model.joblib
-          test -f models/model_card.json
-          test -f data/processed/games.parquet
-          test -f data/processed/dashboard/summary.json
+          ok=1
+          for f in models/game_model.joblib models/model_card.json \
+                   data/processed/games.parquet data/processed/dashboard/summary.json; do
+            if [ -f "$f" ]; then echo "  ok   $f"; else echo "::error::missing $f"; ok=0; fi
+          done
+          [ "$ok" = 1 ] || { echo "::error::pipeline did not produce required artifacts - see 'Show refresh report' above"; exit 1; }
           echo "artifacts OK"
 
       - name: Assemble the Space tree
