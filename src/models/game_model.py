@@ -228,15 +228,30 @@ class GamePredictor:
 
     # -- explainability support --------------------------------------
     def shap_values(self, X: pd.DataFrame):
-        """Return (expected_value, shap_matrix) for the raw classifier."""
+        """Return ``(expected_value, shap_matrix)`` for the raw classifier,
+        normalised to shape ``(n_rows, n_features)`` for the positive class.
+
+        SHAP's LightGBM/XGBoost output format has changed across versions:
+        it may be a 2-D array, a ``[class0, class1]`` list, or a 3-D
+        ``(n_rows, n_features, n_classes)`` array. Handle all of them.
+        """
 
         import shap
 
+        n_feat = len(self.features)
         explainer = shap.TreeExplainer(self.raw_classifier)
         sv = explainer.shap_values(X[self.features])
-        if isinstance(sv, list):  # some backends return [class0, class1]
-            sv = sv[1]
+
+        if isinstance(sv, list):            # [class0, class1] -> positive class
+            sv = sv[-1]
+        sv = np.asarray(sv)
+        if sv.ndim == 1:                    # single row, flattened
+            sv = sv.reshape(1, -1)
+        if sv.ndim == 3:                    # (n_rows, n_features, n_classes)
+            sv = sv[:, :, -1] if sv.shape[1] == n_feat else sv[-1]
+        if sv.shape[-1] != n_feat and sv.shape[0] == n_feat:
+            sv = sv.T                       # (n_features, n_rows) -> transpose
+
         base = explainer.expected_value
-        if isinstance(base, (list, np.ndarray)):
-            base = float(np.ravel(base)[-1])
+        base = float(np.ravel(base)[-1]) if np.ndim(base) else float(base)
         return base, sv

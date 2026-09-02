@@ -47,7 +47,10 @@ def explain_game(
 
     feats = predictor.features
     base, sv = predictor.shap_values(game_row)
-    sv = np.asarray(sv).reshape(-1)
+    sv = np.asarray(sv)
+    sv = sv[-1] if sv.ndim == 2 else sv.reshape(-1)   # -> (n_features,)
+    if len(sv) != len(feats):                          # last-resort guard
+        sv = sv[: len(feats)] if len(sv) > len(feats) else np.pad(sv, (0, len(feats) - len(sv)))
     contribs = pd.DataFrame({"feature": feats, "shap": sv})
     # magnitude is expressed relative to the single largest factor in this
     # game, so the top reason reads as a "major advantage" and the rest
