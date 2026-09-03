@@ -8,7 +8,7 @@ import streamlit as st
 from src.config import get_settings
 from src.features.dictionary import feature_dictionary
 from src.ui import state
-from src.ui.components import freshness_badge
+from src.ui.components import demo_data_banner, freshness_badge
 from src.ui.theme import apply_theme
 
 st.set_page_config(page_title="Methodology & Data", page_icon="📚", layout="wide")
@@ -18,6 +18,7 @@ settings = get_settings()
 card = state.model_card()
 
 st.title("Methodology & Data")
+demo_data_banner()
 
 st.header("Data status")
 freshness_badge(state.freshness(), tz)

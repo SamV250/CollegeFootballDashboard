@@ -299,7 +299,13 @@ def generate_dataset(
         set(cfg["season"]["backtest_seasons"] + [cfg["season"]["current_season"]])
     )
     current = cfg["season"]["current_season"]
-    as_of_week = int(cfg.get("demo", {}).get("as_of_week", 6))
+    # `as_of_week` (optional) pins the current synthetic season to a fixed
+    # week -- handy for a rich mid-season screenshot. Left null (the
+    # default), the synthetic season follows the real calendar so the
+    # offline fallback mirrors "we're in week N right now" instead of
+    # inventing a mid-season state.
+    as_of_week = cfg.get("demo", {}).get("as_of_week")
+    now = as_of or datetime.now(timezone.utc)
 
     teams = build_team_frame(settings)
     lat = teams.set_index("team").to_dict("index")
@@ -310,7 +316,12 @@ def generate_dataset(
         rng = _rng(settings.config["model"]["random_seed"] + season)
         sched = _season_schedule(teams, season, rng)
         for g in sched:
-            played = season < current or (season == current and g["week"] <= as_of_week)
+            if season < current:
+                played = True
+            elif as_of_week is not None:
+                played = g["week"] <= int(as_of_week)
+            else:
+                played = g["date"] < now
             if played:
                 all_rows.append(_simulate_game(g, lat, rng, hfa_pts))
             else:

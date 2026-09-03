@@ -7,6 +7,7 @@ import streamlit as st
 
 from src import pipeline
 from src.ui import state
+from src.ui.components import demo_data_banner
 from src.ui.theme import apply_theme
 
 st.set_page_config(page_title="Playoff Simulator", page_icon="🏆", layout="wide")
@@ -15,6 +16,7 @@ mode, tz = state.ensure_globals()
 season = state.active_season()
 
 st.title("Playoff Simulator")
+demo_data_banner()
 st.caption("Pick winners of upcoming games, or override a game's probability, then "
            "re-run the Monte Carlo season. Compare against the untouched baseline.")
 

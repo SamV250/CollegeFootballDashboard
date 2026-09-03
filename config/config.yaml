@@ -113,9 +113,11 @@ simulation:
 # Demo / offline mode. Used only when the active data source is "demo".
 # ---------------------------------------------------------------------
 demo:
-  # The synthetic current season is treated as complete through this week,
-  # so the dashboard shows a realistic mid-season snapshot out of the box.
-  as_of_week: 6
+  # null  -> the synthetic current season follows the real calendar
+  #          (games "complete" once their date passes) so the offline
+  #          fallback mirrors the real week we're in.
+  # <int> -> pin the current season to that week for a mid-season demo.
+  as_of_week: null
   generated_label: "SYNTHETIC DEMO DATA - not real game results"
 
 version:

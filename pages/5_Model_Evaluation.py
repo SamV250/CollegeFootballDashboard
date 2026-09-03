@@ -7,7 +7,7 @@ import plotly.graph_objects as go
 import streamlit as st
 
 from src.ui import state
-from src.ui.components import calibration_plot
+from src.ui.components import calibration_plot, demo_data_banner
 from src.ui.theme import ACCENT, BAD, GOOD, MUTED, PLOTLY_LAYOUT, apply_theme
 
 st.set_page_config(page_title="Model Evaluation", page_icon="🔬", layout="wide")
@@ -18,6 +18,7 @@ card = state.model_card()
 ev = card.get("evaluation", {})
 
 st.title("Model Evaluation")
+demo_data_banner()
 st.markdown(
     "Every number here is **out-of-sample**: the model never saw these games "
     "during training or calibration. Training-set accuracy is not reported "

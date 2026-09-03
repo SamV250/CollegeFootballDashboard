@@ -9,10 +9,10 @@ import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 
-from src.config import get_settings
 from src.ui import state
 from src.ui.components import (
     big_number_card,
+    demo_data_banner,
     disclaimer_banner,
     freshness_badge,
 )
@@ -74,6 +74,7 @@ def main() -> None:
     season = state.active_season()
 
     st.title(f"Executive Overview — {season}–{str(season + 1)[-2:]} season")
+    demo_data_banner()
     st.caption("Start with the conclusions. Drill into the evidence on the other pages.")
 
     fresh = state.freshness()
@@ -87,11 +88,6 @@ def main() -> None:
     ratings = state.team_ratings(season)
     gp: pd.DataFrame = art["game_predictions"]
     summary = art["summary"]
-
-    demo = summary["freshness"].get("source") == "demo"
-    if demo:
-        st.info(get_settings().config["demo"]["generated_label"] +
-                " — connect a `CFBD_API_KEY` for live data (see Methodology).", icon="🧪")
 
     # ---- headline answers -------------------------------------------------
     top_champ = tp.iloc[0]

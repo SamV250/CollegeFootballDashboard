@@ -7,7 +7,7 @@ import streamlit as st
 
 from src import pipeline
 from src.ui import state
-from src.ui.components import factor_list, win_prob_bar
+from src.ui.components import demo_data_banner, factor_list, win_prob_bar
 from src.ui.formatting import pct, signed
 from src.ui.matchup import render_explanation
 from src.ui.theme import apply_theme
@@ -17,6 +17,7 @@ apply_theme()
 mode, tz = state.ensure_globals()
 
 st.title("Matchup Simulator")
+demo_data_banner()
 st.caption("Pick any two FBS teams and stress-test the matchup. Model output and "
            "your manual assumptions are reported separately.")
 

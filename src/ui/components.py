@@ -26,6 +26,26 @@ def disclaimer_banner() -> None:
     )
 
 
+def demo_data_banner() -> None:
+    """Unmissable notice, shown on every page whenever the active data
+    source is the synthetic fallback."""
+
+    try:
+        from src.ui import state
+
+        src = state.freshness().get("source")
+    except Exception:  # noqa: BLE001
+        src = None
+    if src == "demo":
+        st.error(
+            "🧪 **Showing SYNTHETIC DEMO DATA — not real games.** Scores, "
+            "schedules and standings on this page are simulated. This happens "
+            "when no CollegeFootballData key is configured or CFBD is "
+            "temporarily unavailable. See **Methodology & Data** for status.",
+            icon="🧪",
+        )
+
+
 def freshness_badge(freshness: dict, tz_name: str = "America/New_York") -> None:
     state = freshness.get("state", "unknown")
     cls = {"current": "freshness-current", "delayed": "freshness-delayed",

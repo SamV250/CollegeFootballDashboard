@@ -9,7 +9,7 @@ import streamlit as st
 
 from src.pipeline import tier_label
 from src.ui import state
-from src.ui.components import big_number_card, percentile_bar
+from src.ui.components import big_number_card, demo_data_banner, percentile_bar
 from src.ui.formatting import fmt_dt, pct
 from src.ui.theme import ACCENT, GOOD, MUTED, PLOTLY_LAYOUT, apply_theme
 
@@ -25,6 +25,7 @@ games, teams = state.games_teams()
 feat = state.feature_matrix()
 
 st.title("Team Profile")
+demo_data_banner()
 team = st.selectbox("Team", ratings["team"].tolist())
 row = ratings[ratings["team"] == team].iloc[0]
 probs = tp.loc[team] if team in tp.index else None

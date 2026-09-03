@@ -5,7 +5,7 @@ from __future__ import annotations
 import streamlit as st
 
 from src.ui import state
-from src.ui.components import disclaimer_banner
+from src.ui.components import demo_data_banner, disclaimer_banner
 from src.ui.formatting import fmt_dt
 from src.ui.matchup import build_explanation, render_explanation
 from src.ui.theme import apply_theme
@@ -15,6 +15,7 @@ apply_theme()
 mode, tz = state.ensure_globals()
 
 st.title("Weekly Matchups")
+demo_data_banner()
 st.caption("Predicted winner, score, confidence and the football reasons behind "
            "each pick. Every figure is a probability, not a guarantee.")
 disclaimer_banner()

@@ -178,11 +178,22 @@ class DataStore:
         except json.JSONDecodeError:
             return []
 
+    # entries whose "source" names an actual data adapter (not an
+    # orchestration wrapper like "update_dashboard")
+    _ADAPTER_SOURCES = {"cfbd", "espn", "local", "demo"}
+
     def last_successful_refresh(self) -> dict | None:
+        """Most recent OK entry from an actual data adapter (so the UI
+        reports 'via demo', not 'via update_dashboard')."""
+
+        adapter_hit = None
         for entry in reversed(self.read_log()):
-            if entry.get("status") == "ok":
+            if entry.get("status") != "ok":
+                continue
+            if entry.get("source") in self._ADAPTER_SOURCES:
                 return entry
-        return None
+            adapter_hit = adapter_hit or entry
+        return adapter_hit
 
     def freshness(self, now: datetime | None = None) -> dict:
         """Return a freshness report for the UI badge."""
