@@ -69,13 +69,21 @@ class DataStore:
                 "or `python scripts/build_dataset.py` first."
             )
         df["date"] = pd.to_datetime(df["date"], utc=True)
+        # Defensive: a bad source or a partial merge could leave duplicate
+        # game_ids, which fan out every downstream merge. Keep the most
+        # informative row per id.
+        if "game_id" in df and not df["game_id"].is_unique:
+            df = (df.assign(_info=df.apply(self._info_score, axis=1))
+                    .sort_values("_info")
+                    .drop_duplicates("game_id", keep="last")
+                    .drop(columns="_info"))
         return df.sort_values(["season", "week", "date"]).reset_index(drop=True)
 
     def load_teams(self) -> pd.DataFrame:
         df = self._read(_TEAMS)
         if df is None:
             raise FileNotFoundError("No processed teams found.")
-        return df
+        return df.drop_duplicates(subset="team", keep="first").reset_index(drop=True)
 
     def has_data(self) -> bool:
         return self._path(_GAMES).exists()

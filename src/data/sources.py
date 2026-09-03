@@ -15,6 +15,7 @@ data, because the loader treats "raised" as "try the next source" and
 from __future__ import annotations
 
 import abc
+import time
 from typing import Any
 
 import pandas as pd
@@ -131,23 +132,40 @@ class CFBDSource(DataSource):
     name = "cfbd"
     BASE = "https://api.collegefootballdata.com"
     MAX_WEEK = 20
+    # per-game advanced stats are only pulled for the most recent seasons
+    # (older seasons train fine on results-derived features) -- this keeps
+    # the request count well under CFBD's rate limit.
+    ADVANCED_SEASONS_BACK = 3
+    MAX_RETRIES = 4
+    THROTTLE_SEC = 0.4
 
-    def _get(self, path: str, params: dict[str, Any]) -> Any:
+    def _get(self, path: str, params: dict[str, Any], *, retries: int | None = None) -> Any:
         key = self.settings.cfbd_api_key
         if not key:
             raise SourceError("cfbd: CFBD_API_KEY is not set")
-        try:
-            resp = requests.get(
-                f"{self.BASE}{path}", params=params,
-                headers={"Authorization": f"Bearer {key}"}, timeout=45,
-            )
-        except requests.RequestException as exc:
-            raise SourceError(f"cfbd: {path} request failed ({exc})") from exc
-        if resp.status_code == 401:
-            raise SourceError("cfbd: HTTP 401 - CFBD_API_KEY is missing or invalid")
-        if resp.status_code != 200:
+        retries = self.MAX_RETRIES if retries is None else retries
+        for attempt in range(retries):
+            try:
+                resp = requests.get(
+                    f"{self.BASE}{path}", params=params,
+                    headers={"Authorization": f"Bearer {key}"}, timeout=45,
+                )
+            except requests.RequestException as exc:
+                if attempt == retries - 1:
+                    raise SourceError(f"cfbd: {path} request failed ({exc})") from exc
+                time.sleep(2 ** attempt)
+                continue
+            if resp.status_code == 200:
+                time.sleep(self.THROTTLE_SEC)   # be a good API citizen
+                return resp.json()
+            if resp.status_code == 401:
+                raise SourceError("cfbd: HTTP 401 - CFBD_API_KEY is missing or invalid")
+            if resp.status_code in (429, 500, 502, 503, 504) and attempt < retries - 1:
+                wait = int(resp.headers.get("Retry-After", 0)) or 2 ** (attempt + 1)
+                time.sleep(wait)
+                continue
             raise SourceError(f"cfbd: {path} -> HTTP {resp.status_code}")
-        return resp.json()
+        raise SourceError(f"cfbd: {path} -> exhausted {retries} retries")
 
     # -- games -----------------------------------------------------------
     def _fetch_games(self, season: int) -> tuple[list[dict], dict[str, dict]]:
@@ -217,18 +235,24 @@ class CFBDSource(DataSource):
     def fetch(self, seasons: list[int]) -> dict[str, pd.DataFrame]:
         game_rows: list[dict] = []
         team_rows: dict[str, dict] = {}
-        for season in seasons:
+        ordered = sorted(seasons)
+        adv_from = ordered[-1] - self.ADVANCED_SEASONS_BACK + 1 if ordered else 0
+        for season in ordered:
             rows, teams = self._fetch_games(season)
-            team_rows.update({k: v for k, v in teams.items() if k not in team_rows})
+            # Later seasons overwrite earlier ones so a team's conference
+            # reflects the *current* alignment, not where it was in 2017
+            # (realignment: Texas/Oklahoma -> SEC, Oregon/Washington -> Big Ten, ...).
+            team_rows.update(teams)
 
-            weeks = sorted({r["week"] for r in rows}) or list(range(1, self.MAX_WEEK))
-            adv = self._fetch_advanced(season, weeks)
-            for r in rows:
-                for side, col in (("home", "home_team"), ("away", "away_team")):
-                    rec = adv.get((r["game_id"], r[col]))
-                    if rec:
-                        for metric, val in rec.items():
-                            r[f"{side}_{metric}"] = val
+            if season >= adv_from:
+                weeks = sorted({r["week"] for r in rows}) or list(range(1, self.MAX_WEEK))
+                adv = self._fetch_advanced(season, weeks)
+                for r in rows:
+                    for side, col in (("home", "home_team"), ("away", "away_team")):
+                        rec = adv.get((r["game_id"], r[col]))
+                        if rec:
+                            for metric, val in rec.items():
+                                r[f"{side}_{metric}"] = val
             game_rows.extend(rows)
 
         if not game_rows:

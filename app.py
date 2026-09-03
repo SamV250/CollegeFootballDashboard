@@ -125,7 +125,7 @@ def main() -> None:
                                text=[f"{v*100:.1f}%" for v in d["p_national_champion"]],
                                textposition="outside"))
         fig.update_layout(height=420, xaxis_title="%", **PLOTLY_LAYOUT)
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, use_container_width=True, key="natl_title_bar")
     with right:
         st.subheader("Playoff probability (top 16)")
         d = tp.sort_values("p_playoff").tail(16)[["team", "p_playoff"]]
@@ -134,7 +134,7 @@ def main() -> None:
                                text=[f"{v*100:.0f}%" for v in d["p_playoff"]],
                                textposition="outside"))
         fig.update_layout(height=420, xaxis_title="%", **PLOTLY_LAYOUT)
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, use_container_width=True, key="playoff_prob_bar")
     st.caption("Playoff and championship figures are **estimates** from a "
                "transparent, configurable selection model — not a forecast of "
                "the selection committee's choices.")

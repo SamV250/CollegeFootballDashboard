@@ -25,32 +25,32 @@ if upc.empty:
     st.info("No upcoming games to simulate.")
     st.stop()
 
-upc = upc.sort_values(["week", "date"]).copy()
+upc = upc.sort_values(["week", "date"]).drop_duplicates("game_id").copy()
 upc["label"] = [f"W{int(w)}: {a} at {h}  (model: {h} {p*100:.0f}%)"
                 for w, h, a, p in zip(upc["week"], upc["home_team"],
                                       upc["away_team"], upc["home_win_prob"])]
+label_map = dict(zip(upc["game_id"], upc["label"]))
+game_by_id = upc.set_index("game_id")
 
 st.subheader("1. Set results")
 ratings = state.team_ratings(season)
-notable = set(ratings.head(40)["team"])
-default_games = upc[upc["home_team"].isin(notable) | upc["away_team"].isin(notable)]
 pick_from = st.multiselect(
     "Choose games to fix (search by team or week)",
-    options=upc["game_id"].tolist(),
-    format_func=lambda g: upc.set_index("game_id").loc[g, "label"],
+    options=list(label_map),
+    format_func=lambda g: label_map.get(g, str(g)),
     max_selections=25,
 )
 
 forced: dict[str, str] = {}
-if pick_from:
-    for gid in pick_from:
-        r = upc.set_index("game_id").loc[gid]
-        choice = st.radio(r["label"], [r["home_team"], r["away_team"], "leave to model"],
-                          horizontal=True, key=f"pick_{gid}")
-        if choice == r["home_team"]:
-            forced[gid] = "home"
-        elif choice == r["away_team"]:
-            forced[gid] = "away"
+for gid in pick_from:
+    r = game_by_id.loc[gid]
+    choice = st.radio(label_map[gid],
+                      [r["home_team"], r["away_team"], "leave to model"],
+                      horizontal=True, key=f"pick_{gid}")
+    if choice == r["home_team"]:
+        forced[gid] = "home"
+    elif choice == r["away_team"]:
+        forced[gid] = "away"
 
 n_iter = st.select_slider("Simulation iterations", [2000, 4000, 8000, 12000], value=4000)
 go = st.button("▶ Run scenario", type="primary")

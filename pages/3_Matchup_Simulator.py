@@ -137,4 +137,4 @@ comp = pd.DataFrame({
 st.dataframe(comp, use_container_width=True, hide_index=True)
 
 if mode == "Analyst":
-    render_explanation(exp, "Analyst")
+    render_explanation(exp, "Analyst", key_prefix="sim")

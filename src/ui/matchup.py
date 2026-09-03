@@ -19,13 +19,14 @@ def build_explanation(predictor, feat_row: pd.DataFrame, prev_prob: float | None
     return explain_game(predictor, feat_row, pred, prev_prediction=prev_prob)
 
 
-def render_explanation(exp: dict, mode: str = "Executive") -> None:
+def render_explanation(exp: dict, mode: str = "Executive", key_prefix: str = "mx") -> None:
     home, away = exp["home_team"], exp["away_team"]
     fav, dog = exp["favorite"], exp["underdog"]
     p_fav = exp["favorite_win_prob"]
+    kp = str(key_prefix).replace(" ", "_")
 
     headline(f"{exp['summary']}")
-    win_prob_bar(home, away, exp["home_win_prob"])
+    win_prob_bar(home, away, exp["home_win_prob"], key=f"{kp}_winprob")
 
     c1, c2, c3, c4 = st.columns(4)
     c1.metric("Predicted winner", fav, f"{pct(p_fav)} win prob")
@@ -73,7 +74,8 @@ def render_explanation(exp: dict, mode: str = "Executive") -> None:
                     "Std. contribution": round(f["z"], 3),
                     "Definition": f["tooltip"],
                 })
-            st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+            st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True,
+                         key=f"{kp}_shap_tbl")
             st.caption(
                 f"SHAP base value (model's average log-odds output): "
                 f"{exp['shap_base_value']:.3f}. Contributions are standardized by "

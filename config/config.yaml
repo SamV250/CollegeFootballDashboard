@@ -25,7 +25,12 @@ season:
 # erases previously validated data (see src/data/store.py).
 # ---------------------------------------------------------------------
 data:
-  source_priority: ["cfbd", "espn", "local", "demo"]
+  # ESPN is intentionally NOT in the default chain: its public endpoints
+  # return every division with mascot-style names and numeric conference
+  # ids, which poisons the model. A CFBD hiccup should fall back to the
+  # clean synthetic dataset, not to broken real-ish data. Re-enable
+  # "espn" only if you have a name/conference mapping layer.
+  source_priority: ["cfbd", "local", "demo"]
   storage_format: "parquet"     # parquet | sqlite
   processed_dir: "data/processed"
   raw_dir: "data/raw"

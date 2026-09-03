@@ -59,7 +59,8 @@ for tab, split in zip(tab_objs, split_names):
                 "Acc. vs favorite": f"{m.get('accuracy_vs_market_favorite', float('nan')):.3f}"
                                     if "accuracy_vs_market_favorite" in m else "—",
             })
-        st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+        st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True,
+                     key=f"me_baselines_{split}")
         st.caption("Lower log loss / Brier / calibration error is better. "
                    "'Acc. vs favorite' compares the pick to the Elo favorite "
                    "(used as a market proxy when no betting line is available).")
@@ -68,7 +69,7 @@ for tab, split in zip(tab_objs, split_names):
         with c1:
             cal = pd.DataFrame(block["calibration_table"])
             st.plotly_chart(calibration_plot(cal, f"Calibration — {split}"),
-                            use_container_width=True)
+                            use_container_width=True, key=f"me_cal_{split}")
         with c2:
             conf = pd.DataFrame(block["by_confidence"])
             if not conf.empty:
@@ -79,7 +80,7 @@ for tab, split in zip(tab_objs, split_names):
                             name="Actually right", marker_color=ACCENT)
                 fig.update_layout(title="Confidence vs. reality", barmode="group",
                                   yaxis_title="%", height=380, **PLOTLY_LAYOUT)
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, use_container_width=True, key=f"me_conf_{split}")
 
         st.subheader("Score prediction")
         s1, s2, s3, s4 = st.columns(4)
@@ -96,7 +97,7 @@ for tab, split in zip(tab_objs, split_names):
                                marker_color=GOOD))
         fig.update_layout(title="Margin predicted within N points", yaxis_title="%",
                           height=300, **PLOTLY_LAYOUT)
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, use_container_width=True, key=f"me_within_{split}")
 
         st.subheader("Where it is strong and weak")
         cc1, cc2 = st.columns(2)
@@ -104,12 +105,14 @@ for tab, split in zip(tab_objs, split_names):
             st.markdown("**By conference**")
             bc = pd.DataFrame(block["by_conference"])
             if not bc.empty:
-                st.dataframe(bc.round(4), use_container_width=True, hide_index=True)
+                st.dataframe(bc.round(4), use_container_width=True, hide_index=True,
+                             key=f"me_byconf_{split}")
         with cc2:
             st.markdown("**By game location**")
             bl = pd.DataFrame(block["by_location"])
             if not bl.empty:
-                st.dataframe(bl.round(4), use_container_width=True, hide_index=True)
+                st.dataframe(bl.round(4), use_container_width=True, hide_index=True,
+                             key=f"me_byloc_{split}")
 
 st.divider()
 st.subheader("Per-season backtest")
@@ -127,8 +130,9 @@ if not bs.empty:
                                   side="right"),
                       **{k: v for k, v in PLOTLY_LAYOUT.items()
                          if k not in ("yaxis", "xaxis")})
-    st.plotly_chart(fig, use_container_width=True)
-    st.dataframe(bs.round(4), use_container_width=True, hide_index=True)
+    st.plotly_chart(fig, use_container_width=True, key="me_by_season")
+    st.dataframe(bs.round(4), use_container_width=True, hide_index=True,
+                 key="me_by_season_tbl")
 
 st.divider()
 st.markdown(f"""

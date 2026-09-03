@@ -108,9 +108,16 @@ def team_ratings(season: int | None = None) -> pd.DataFrame:
     rolled = rolling_team_features(team_game_log(games), get_settings())
     latest = latest_team_ratings(rolled, season)
 
+    # Iterate the teams actually present in the loaded data (their names
+    # and conferences come from the active data source), NOT the offline
+    # conferences.yaml list -- those names differ from CFBD's and would
+    # leave most teams at the default Elo rating.
+    conf_map = dict(zip(teams["team"], teams.get("conference", "FBS Independents")))
+    team_names = sorted(set(games["home_team"]) | set(games["away_team"]))
+
     rows = []
     cur = games[games["season"] == season]
-    for t in get_settings().all_fbs_teams():
+    for t in team_names:
         played = cur[((cur["home_team"] == t) | (cur["away_team"] == t)) & cur["completed"]]
         w = losses = 0
         pf = pa = 0.0
@@ -130,7 +137,7 @@ def team_ratings(season: int | None = None) -> pd.DataFrame:
         st = float(lr["exp_st_epa"].iloc[0]) if not lr.empty and "exp_st_epa" in lr else np.nan
         rows.append({
             "team": t,
-            "conference": get_settings().conference_of(t),
+            "conference": conf_map.get(t, "FBS Independents"),
             "wins": w, "losses": losses,
             "record": f"{w}-{losses}",
             "elo": round(elo.rating(t), 1),

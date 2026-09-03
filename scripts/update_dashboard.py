@@ -91,10 +91,21 @@ def main() -> None:
     # 10: log
     report["elapsed_seconds"] = round(time.time() - t0, 1)
     report["finished_utc"] = utc_now().isoformat()
-    store.log_refresh(source="update_dashboard", status="ok", detail=report)
+    failed = [k for k, v in report["steps"].items()
+              if isinstance(v, dict) and v.get("status") == "failed"]
+    report["ok"] = not failed
+    store.log_refresh(source="update_dashboard",
+                      status="ok" if not failed else "failed", detail=report)
     (settings.processed_dir / "last_update_report.json").write_text(
         json.dumps(report, indent=2, default=str))
     print(json.dumps(report, indent=2, default=str))
+    if failed:
+        # training/simulation failure -> non-zero exit so CI does not deploy
+        # a broken build. A data_refresh failure alone is tolerated (the
+        # previous good dataset keeps serving).
+        blocking = [k for k in failed if k != "data_refresh"]
+        if blocking:
+            raise SystemExit(f"update_dashboard: failed steps: {blocking}")
 
 
 if __name__ == "__main__":

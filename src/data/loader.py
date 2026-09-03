@@ -47,6 +47,9 @@ def refresh(
         try:
             adapter = get_source(name, settings)
             payload = adapter.fetch(seasons)
+            problems = _sanity_check_payload(payload)
+            if problems:
+                raise SourceError("failed FBS sanity check: " + "; ".join(problems))
             summary = store.upsert(payload, source=name)
             log.info("refresh: source=%s %s", name, summary)
             return {"source": name, "status": "ok", **summary}
@@ -61,6 +64,32 @@ def refresh(
         "All data sources failed; previous data (if any) left intact.\n  "
         + "\n  ".join(errors)
     )
+
+
+def _sanity_check_payload(payload: dict[str, pd.DataFrame]) -> list[str]:
+    """Catch an adapter that 'succeeds' but returns non-FBS junk (e.g. the
+    ESPN fallback returning all divisions with numeric conference ids)."""
+
+    problems: list[str] = []
+    teams, games = payload.get("teams"), payload.get("games")
+    if teams is None or games is None:
+        return ["missing teams/games frame"]
+
+    n_teams = teams["team"].nunique()
+    if not 90 <= n_teams <= 170:
+        problems.append(f"implausible FBS team count: {n_teams} (expect ~130-140)")
+
+    confs = teams["conference"].dropna().astype(str)
+    if len(confs) and (confs.str.fullmatch(r"\d+").mean() > 0.3):
+        problems.append("conferences look like numeric ids, not names")
+
+    completed = int(games.get("completed", pd.Series(dtype=bool)).sum())
+    # need enough finished games across history to train; a brand-new
+    # season alone (a few dozen games) is not enough.
+    if completed < 400:
+        problems.append(f"only {completed} completed games - not enough to train")
+
+    return problems
 
 
 def _ensure_data(settings: Settings) -> DataStore:

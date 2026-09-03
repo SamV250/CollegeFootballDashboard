@@ -97,12 +97,12 @@ feat = state.feature_matrix()
 order = view.sort_values(["week", "playoff_impact"], ascending=[True, False])
 limit = st.slider("How many breakdowns to render", 1, min(30, len(order)),
                   min(8, len(order)))
-for gid in order["game_id"].head(limit):
-    row = feat[feat["game_id"] == gid]
+for gid in order["game_id"].drop_duplicates().head(limit):
+    row = feat[feat["game_id"] == gid].head(1)
     if row.empty:
         continue
     g = row.iloc[0]
     with st.expander(f"Week {int(g['week'])} — {g['away_team']} at {g['home_team']}  "
                      f"({fmt_dt(g['date'], tz)})", expanded=(limit <= 3)):
         exp = build_explanation(predictor, row)
-        render_explanation(exp, mode)
+        render_explanation(exp, mode, key_prefix=str(gid))

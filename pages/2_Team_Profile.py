@@ -101,7 +101,7 @@ if not tg.empty:
                       yaxis_title="Win probability %", xaxis_title="Week",
                       height=380, **PLOTLY_LAYOUT)
     fig.update_yaxes(range=[0, 100])
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, use_container_width=True, key="tp_winprob_by_week")
 
     disp = tg[["week", "site", "opponent", "result", "team_win_prob",
                "pred_home_points", "pred_away_points", "date"]].copy()
@@ -177,7 +177,7 @@ if not played.empty and len(played) >= 3:
                     line=dict(color=ACCENT))
     fig.update_layout(title="Pre-game win probability across the season so far",
                       yaxis_title="%", xaxis_title="Week", height=320, **PLOTLY_LAYOUT)
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, use_container_width=True, key="tp_trajectory")
 
 st.caption("Playoff / championship figures are estimates from the simulated "
            "selection model. See Methodology for details.")

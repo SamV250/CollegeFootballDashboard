@@ -102,7 +102,7 @@ def percentile_bar(label: str, value: float, tier: str) -> None:
     )
 
 
-def win_prob_bar(home: str, away: str, p_home: float) -> None:
+def win_prob_bar(home: str, away: str, p_home: float, key: str | None = None) -> None:
     fig = go.Figure()
     fig.add_bar(y=["Win probability"], x=[p_home * 100], orientation="h",
                 marker_color=ACCENT, name=home,
@@ -115,7 +115,8 @@ def win_prob_bar(home: str, away: str, p_home: float) -> None:
                       **{k: v for k, v in PLOTLY_LAYOUT.items()
                          if k not in ("xaxis", "yaxis")})
     fig.update_yaxes(showticklabels=False)
-    st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
+    st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False},
+                    key=key or f"winprob_{home}_{away}".replace(" ", "_"))
 
 
 def calibration_plot(cal_df: pd.DataFrame, title: str = "Calibration") -> go.Figure:
